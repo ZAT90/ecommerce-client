@@ -1,18 +1,31 @@
-import React, { useState } from "react";
-import { toast, ToastContainer } from 'react-toastify';
+import React, { useEffect, useState } from "react";
+import { toast } from 'react-toastify';
 import { auth } from "../../firebase";
 import { sendSignInLinkToEmail } from "firebase/auth";
-import 'react-toastify/dist/ReactToastify.css';
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
 
 const Register = () => {
     const [email, setEmail] = useState('');
+    const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const { user } = useSelector(state => ({ ...state }))
+
+    useEffect(() => {
+        if (user && user.token) navigate('/')
+    }, [user, navigate])
+
+    const handleSubmit = (e) => {
         e.preventDefault();
+        console.log('start submit reg 1: ', process.env.REACT_APP_REGISTER_REDIRECT_URL);
         const config = {
-            url: 'http://localhost:3000/register/complete',
+            // url: 'http://localhost:3000/register/complete',
+            url: process.env.REACT_APP_REGISTER_REDIRECT_URL,
             handleCodeInApp: true,
         }
+
+        console.log('start submit reg 2');
 
         sendSignInLinkToEmail(auth, email, config)
             .then(() => {
@@ -21,13 +34,15 @@ const Register = () => {
                     position: toast.POSITION.TOP_RIGHT,
                 })
                 // save user email in local storage
-                window.localStorage.setItem('emailForSignIn', email);
+                window.localStorage.setItem('emailForReg', email);
                 //clear state
                 setEmail('')
             })
             .catch((error) => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
+                console.log(`errorCode: ${errorCode}`);
+                console.log(`errorMessage: ${errorMessage}`);
                 // ...
             });
         // await sendSignInLinkToEmail(auth, email, config);
@@ -42,9 +57,10 @@ const Register = () => {
             className="form-control"
             value={email}
             onChange={event => setEmail(event.target.value)}
+            placeholder="Your Email"
             autoFocus
         />
-        <div style={{ height: 20 }} />
+        <br />
         <button type="submit" className="square border border-1">Register</button>
     </form>
     return (
@@ -52,9 +68,8 @@ const Register = () => {
             <div className="row">
                 <div className="col-md-6 offset-md-3">
                     <h4>Register</h4>
-                    <ToastContainer />
                     {registerForm()}
-                   
+
                 </div>
             </div>
         </div>
